@@ -16,8 +16,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       padding: 60px 80px;
+      gap: 80px;
     }
 
     h1 {
@@ -26,7 +26,41 @@
       letter-spacing: 0.15em;
       text-transform: uppercase;
       color: #222;
-      margin-bottom: 40px;
+    }
+
+    .section {
+      width: 100%;
+      max-width: 1280px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    .section-label {
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: 20px;
+      align-self: flex-start;
+    }
+
+    .player-container {
+      position: relative;
+      padding-top: 56.25%;
+      width: 100%;
+    }
+
+    .player-container iframe,
+    .player-container video {
+      position: absolute;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #000;
     }
 
     .controls {
@@ -53,8 +87,8 @@
     button:active { opacity: 0.6; }
     button:disabled { opacity: 0.3; cursor: not-allowed; }
 
-    #btn-play  { background: #1a6fd4; color: #fff; }
-    #btn-pause { background: #444; color: #fff; }
+    .btn-play  { background: #1a6fd4; color: #fff; }
+    .btn-pause { background: #444; color: #fff; }
 
     .status {
       margin-top: 24px;
@@ -62,47 +96,91 @@
       color: #222;
       letter-spacing: 0.05em;
     }
+
+    hr {
+      width: 100%;
+      max-width: 1280px;
+      border: none;
+      border-top: 1px solid #bbb;
+    }
   </style>
 </head>
 <body>
 
   <h1>ホスピタルネット様用　埋め込み動画操作デモ</h1>
 
-  <div style="position: relative; padding-top: 56.25%; width: 100%; max-width: 1280px;">
-    <iframe id="bunny-player"
-        src="https://iframe.mediadelivery.net/embed/56197/1a36ea5e-f512-4140-b292-17e5eb445414"
-        loading="eager" style="border: none; position: absolute; top: 0; height: 100%; width: 100%;"
-        allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen="true">
-    </iframe>
+  <!-- iframe (OneStream) -->
+  <div class="section">
+    <p class="section-label">① iframe</p>
+    <div class="player-container">
+      <iframe id="iframe-player"
+          src="https://iframe.mediadelivery.net/embed/56197/1a36ea5e-f512-4140-b292-17e5eb445414"
+          loading="eager"
+          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen="true">
+      </iframe>
+    </div>
+    <div class="controls">
+      <button id="iframe-btn-play"  class="btn-play"  disabled>▶ Play</button>
+      <button id="iframe-btn-pause" class="btn-pause" disabled>⏸ Pause</button>
+    </div>
+    <p class="status" id="iframe-status">プレイヤー読み込み中...</p>
   </div>
 
-  <div class="controls">
-    <button id="btn-play"  disabled>▶ Play</button>
-    <button id="btn-pause" disabled>⏸ Pause</button>
-  </div>
+  <hr>
 
-  <p class="status" id="status">プレイヤー読み込み中...</p>
+  <!-- video直貼り (BunnyCDN MP4) -->
+  <div class="section">
+    <p class="section-label">② videoタグ</p>
+    <div class="player-container">
+      <video id="video-player" controls playsinline>
+        <source src="https://vz-5c7b599d-cda.b-cdn.net/1a36ea5e-f512-4140-b292-17e5eb445414/play_720p.mp4" type="video/mp4">
+      </video>
+    </div>
+    <div class="controls">
+      <button id="video-btn-play"  class="btn-play"  disabled>▶ Play</button>
+      <button id="video-btn-pause" class="btn-pause" disabled>⏸ Pause</button>
+    </div>
+    <p class="status" id="video-status">プレイヤー読み込み中...</p>
+  </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const player = new playerjs.Player(document.getElementById('bunny-player'));
+      // ① iframe (playerjs)
+      const iframePlayer = new playerjs.Player(document.getElementById('iframe-player'));
+      const iframeBtnPlay  = document.getElementById('iframe-btn-play');
+      const iframeBtnPause = document.getElementById('iframe-btn-pause');
+      const iframeStatus   = document.getElementById('iframe-status');
 
-      const btnPlay  = document.getElementById('btn-play');
-      const btnPause = document.getElementById('btn-pause');
-      const status   = document.getElementById('status');
-
-      player.on('ready', () => {
-        btnPlay.disabled  = false;
-        btnPause.disabled = false;
-        status.textContent = 'プレイヤー準備完了';
+      iframePlayer.on('ready', () => {
+        iframeBtnPlay.disabled  = false;
+        iframeBtnPause.disabled = false;
+        iframeStatus.textContent = 'プレイヤー準備完了';
       });
+      iframePlayer.on('play',  () => { iframeStatus.textContent = '再生中'; });
+      iframePlayer.on('pause', () => { iframeStatus.textContent = '一時停止'; });
+      iframePlayer.on('ended', () => { iframeStatus.textContent = '再生完了'; });
 
-      player.on('play',  () => { status.textContent = '再生中'; });
-      player.on('pause', () => { status.textContent = '一時停止'; });
-      player.on('ended', () => { status.textContent = '再生完了'; });
+      iframeBtnPlay.addEventListener('click',  () => iframePlayer.play());
+      iframeBtnPause.addEventListener('click', () => iframePlayer.pause());
 
-      btnPlay.addEventListener('click',  () => player.play());
-      btnPause.addEventListener('click', () => player.pause());
+      // ② video直貼り
+      const video = document.getElementById('video-player');
+      const videoBtnPlay  = document.getElementById('video-btn-play');
+      const videoBtnPause = document.getElementById('video-btn-pause');
+      const videoStatus   = document.getElementById('video-status');
+
+      video.addEventListener('canplay', () => {
+        videoBtnPlay.disabled  = false;
+        videoBtnPause.disabled = false;
+        videoStatus.textContent = 'プレイヤー準備完了';
+      });
+      video.addEventListener('error', () => { videoStatus.textContent = '読み込みエラー'; });
+      video.addEventListener('play',  () => { videoStatus.textContent = '再生中'; });
+      video.addEventListener('pause', () => { videoStatus.textContent = '一時停止'; });
+      video.addEventListener('ended', () => { videoStatus.textContent = '再生完了'; });
+
+      videoBtnPlay.addEventListener('click',  () => video.play());
+      videoBtnPause.addEventListener('click', () => video.pause());
     });
   </script>
 
